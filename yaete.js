@@ -21,14 +21,14 @@
     // The ending comment tag type char, eg the right "#" in "<# ... #>"
     var TAG_COMMENT_END = global.YAETE_TAG_COMMENT_END || '#';
 
-    // The beginning literal tag type char, eg the inner left "<" in "<< ... >>"
-    var TAG_LITERAL_START = global.YAETE_TAG_LITERAL_START || '<';
+    // The beginning variable tag type char, eg the inner left "<" in "<< ... >>"
+    var TAG_VARIABLE_START = global.YAETE_TAG_VARIABLE_START || '<';
 
-    // The ending literal tag type char, eg the inner right ">" in "<< ... >>"
-    var TAG_LITERAL_END = global.YAETE_TAG_LITERAL_END || '>';
+    // The ending variable tag type char, eg the inner right ">" in "<< ... >>"
+    var TAG_VARIABLE_END = global.YAETE_TAG_VARIABLE_END || '>';
 
-    // The literal unescaped signifier, eg the "!" in "<<! ... >>"
-    var TAG_LITERAL_UNESCAPED = global.YAETE_TAG_LITERAL_UNESCAPED || '!';
+    // The unescaped variable signifier, eg the "!" in "<<! ... >>"
+    var TAG_VARIABLE_UNESCAPED = global.YAETE_TAG_VARIABLE_UNESCAPED || '!';
 
     var escape_regexp = function(s) {
         return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
@@ -42,16 +42,16 @@
         + '(' + escape_regexp(TAG_START)
 
         // group 3: start of tag type
-        + '(' + escape_regexp(TAG_CODE_START) + '|' + escape_regexp(TAG_LITERAL_START) + ')'
+        + '(' + escape_regexp(TAG_CODE_START) + '|' + escape_regexp(TAG_VARIABLE_START) + ')'
 
-        // group 4: unescape token for tag literal only
-        + '(' + escape_regexp(TAG_LITERAL_UNESCAPED) + '?)'
+        // group 4: unescape token for tag variable only
+        + '(' + escape_regexp(TAG_VARIABLE_UNESCAPED) + '?)'
 
         // group 5: code, non-greedy
         + '([\\s\\S]+?)'
 
         // group 6: end of tag type
-        + '(' + escape_regexp(TAG_CODE_END) + '|' + escape_regexp(TAG_LITERAL_END) + ')'
+        + '(' + escape_regexp(TAG_CODE_END) + '|' + escape_regexp(TAG_VARIABLE_END) + ')'
 
         // end of tag, end of regexp
         + escape_regexp(TAG_END) + ')', 'g');
@@ -73,10 +73,10 @@
         // end of tag, end of regexp
         + escape_regexp(TAG_END), 'g');
 
-    var print_array_name = 'p';
+    var print_array_name = '__p';  // TODO: Obfuscate this more
 
     var Yaete = global.Yaete = function(template) {
-        this.template = template;
+        this.template = template;  // TODO: No need to store this
 
         if (cache[template] === undefined) {
             this.compile();
@@ -91,21 +91,23 @@
    }
 
     Yaete.escape_html = function(s) {
-        return s.replace(/[&<>"'\/]/g, function(match) {
+        return ("" + s).replace(/[&<>"'\/]/g, function(match) {
             return '&#' + match.charCodeAt(0) + ';';
         });
     }
 
     Yaete.prototype.compile = function() {
-        // state machine for the compiler
+        // State machine for the compiler
         var state = {
             match_offset: 0,
             in_string: false
         }
 
+        // Strip out comments
         var stripped_template = this.template.replace(COMMENT_STRIPPER, '');
 
-        var compile_literal = function(code) {
+        // Helper for compiling a variable << ... >> tag in the parser
+        var compile_variable = function(code) {
             var statements = [];
             if (state.in_string) {
                 statements.push(", ");
@@ -117,10 +119,12 @@
             return statements.join("");
         }
 
+        // Helper for compiling a string, ie something not in a template tag
         var compile_string = function(string) {
-            return compile_literal(JSON.stringify(string));
+            return compile_variable(JSON.stringify(string));
         }
 
+        // Helper for compiling code, ie <% ... %>
         var compile_code = function(code) {
             var statements = [];
 
@@ -133,44 +137,52 @@
             return statements.join("");
         }
 
-        // Main parser for
+        // Main parser
+        //
+        // Goes through stripped_template replacing optional text followed by a
+        // tag iteratively. When complete, func_body will be completely parsed
+        // except for the characters in stripped_template after state.match_offset
         var func_body = stripped_template.replace(PARSER, function(match, text, tag, tag_start, unescape, code, tag_end, offset) {
             // sanity check to make sure match_offset == offset
-            // probably can delete after unit testing
+            // TODO: can safely delete after testing
             if (state.match_offset != offset) {
                 alert("state.match_offset (" + state.match_offset + ") != offset (" + offset + ")");
             }
 
+            // list of statements to output
             var statements = [];
 
             // update position to end of match
             state.match_offset = offset + match.length;
 
+            // compile text if some exsts
             if (text) {
                 statements.push(compile_string(text));
             }
 
-            // Compilation for code type
+            // Compile code blocks
             switch (tag_start) {
                 case TAG_CODE_START:
-                    // Include unescape token (if it exists)
                     if (tag_end == TAG_CODE_END) {
+                        // compile code, include unescape token (if it exists)
                         statements.push(compile_code(unescape + code));
                     } else {
-                        // invalid end token, compile as string
+                        // invalid end token, compile entire tag as string
                         statements.push(compile_string(tag));
                     }
                     break;
 
-                case TAG_LITERAL_START:
-                    if (tag_end == TAG_LITERAL_END) {
+                case TAG_VARIABLE_START:
+                    if (tag_end == TAG_VARIABLE_END) {
                         if (unescape) {
-                            statements.push(compile_literal(code));
+                            // compile unescaped variable expression
+                            statements.push(compile_variable(code));
                         } else {
-                            statements.push(compile_literal('Yaete.escape_html(' + code + ')'));
+                            // compile escaped variable expression using Yaete.escape_html()
+                            statements.push(compile_variable('Yaete.escape_html(' + code + ')'));
                         }
                     } else {
-                        // invalid end token, compile as string
+                        // invalid end token, compile entire tag as string
                         statements.push(compile_string(tag));
                     }
                     break;
@@ -192,20 +204,25 @@
             func_body += ');';
         }
 
+        // Wrap beginning and end of function with argument context
         func_body = "var " + print_array_name + " = [];\n"
             + "var print = function() { " + print_array_name + ".push.apply(" + print_array_name + ", arguments); };\n"
             + "with (context) {\n"
-            + func_body
-            + "\n}\n"
+            + func_body + "\n"
+            + "};\n"
             + "return " + print_array_name + '.join("");';
 
-        this.func_body = func_body;
+        this.func_body = func_body;  // TODO: Don't need to store this
         this.func = new Function("context", func_body);
     }
 
     Yaete.prototype.render = function(context) {
         // Call using global scope
         return this.func.apply(global, [context || {}]);
+    }
+
+    Yaete._clear_cache = function() {  // TODO: Delete this helper
+        cache = {};
     }
 
     Yaete.render = function(template, context) {
