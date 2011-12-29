@@ -73,7 +73,8 @@
         // end of tag, end of regexp
         + escape_regexp(TAG_END), 'g');
 
-    var print_array_name = '__p';  // TODO: Obfuscate this more
+    var print_array_name = '__p';  // TODO: Obfuscate these more
+    var context_name = '__context';
 
     var Kaete = global.Kaete = function(template) {
         this.template = template;  // TODO: No need to store this
@@ -82,7 +83,6 @@
             this.compile();
             cache[template] = this.func;
         } else {
-            console.log("cache hit");
             this.func = cache[template];
         }
 
@@ -109,6 +109,7 @@
         // Helper for compiling a variable << ... >> tag in the parser
         var compile_variable = function(code) {
             var statements = [];
+
             if (state.in_string) {
                 statements.push(", ");
             } else {
@@ -116,6 +117,7 @@
                 statements.push(print_array_name + ".push(");
             }
             statements.push(code);
+
             return statements.join("");
         }
 
@@ -129,11 +131,11 @@
             var statements = [];
 
             if (state.in_string) {
-                statements.push("); ");
+                statements.push(");\n");
                 state.in_string = false;
             }
 
-            statements.push(code);
+            statements.push(code + "\n");
             return statements.join("");
         }
 
@@ -206,19 +208,33 @@
 
         // Wrap beginning and end of function with argument context
         func_body = "var " + print_array_name + " = [];\n"
-            + "var print = function() { " + print_array_name + ".push.apply(" + print_array_name + ", arguments); };\n"
-            + "with (context) {\n"
+            + "var print = function(s, u) { " + print_array_name + ".push(u ? s : Kaete.escape_html(s)); };\n"
+            + "with (" + context_name + ") {\n"
             + func_body + "\n"
             + "};\n"
             + "return " + print_array_name + '.join("");';
 
         this.func_body = func_body;  // TODO: Don't need to store this
-        this.func = new Function("context", func_body);
+        try {
+            this.func = new Function(context_name, func_body);
+        } catch (exp) {
+            alert("Error compiling template.\n\n" + exp.message);
+            this.func = null;
+        }
     }
 
     Kaete.prototype.render = function(context) {
-        // Call using global scope
-        return this.func.apply(global, [context || {}]);
+        // Call with global scope
+        if (this.func) {
+            try {
+                return this.func.call(global, context || {});
+            } catch (exp) {
+                alert("Error rendering template.\n\n" + exp.message);
+                return "Couldn't render template.";
+            }
+        } else {
+            return "Couldn't compile template."
+        }
     }
 
     Kaete._clear_cache = function() {  // TODO: Delete this helper
@@ -230,4 +246,4 @@
         return t.render(context);
     }
 
-}).apply(this);
+}).call(this);
