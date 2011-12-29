@@ -1,19 +1,54 @@
 Kaete
 =====
 
-Kaete's An ECMAScript Templating Engine.
+**K**aete's **A**n **E**CMAScript **T**emplating **E**ngine.
+
+*Kaete is in active development and is very turbulent right now. The API and
+template language may change as features and implementation are not yet
+finalized. Expect bugs!*
+
 
 Introduction
 ------------
 
 Kaete is fast and lightweight JavaScript templating engine loosely
-based on [John Resig's Micro-Templating blog post](http://ejohn.org/blog/javascript-micro-templating/).
-It aims to be a more 
+based on John Resig's [Micro-Templating blog post](http://ejohn.org/blog/javascript-micro-templating/).
 
 
-### Test Console
+### Demo Console
 
-Try out the [test console](http://dtcooper.github.com/Kaete/).
+You can test out the development version of Kaete in this nifty
+[demo console](http://dtcooper.github.com/Kaete/).
+
+
+Template API
+------------
+
+Here's a sample use of the API.
+
+    var context = {
+        thing: "World"
+    }
+
+    var template_code = '<% for (var i = 0; i < 5; i++) { %>\n'
+        + '<p>Hello, << thing >>!</p>\n'
+        + '<% } %>';
+        
+    var template = new Kaete(template_code);
+
+    var rendered_template = template.render(context);
+
+    // Use jQuery to write results (jQuery not required for Kaete)
+    $("#template_div").html(rendered_template);
+    
+
+This will set the contents of `<div id="template_div"></div>` to,
+
+    <p>Hello, World!</p>
+    <p>Hello, World!</p>
+    <p>Hello, World!</p>
+    <p>Hello, World!</p>
+    <p>Hello, World!</p>
 
 
 Template Tags
@@ -21,15 +56,17 @@ Template Tags
 
 ### Code Template Tag
 
+A code template tag looks like this,
+
     <% [... JavaScript goes here ...] %>
 
 These can be used for JavaScript in your template. An example below renders
 "Hello" five times,
 
     <% for (var i = 0; i < 5; i++) { %>
-    
+
         Hello
-    
+
     <% } %>
 
 
@@ -44,38 +81,136 @@ This would output the following *with whitespace changed for clarity,*
 
 #### Semi-colon Warning
 
-#### The `print(string, unescaped)` function
+Just like in pure JavaScript, semi-colons *can and often do* matter
+in your Kaete code template tags. Look at the following example,
+
+    <% var hello = "world" %>
+    this is a test
+
+
+Kaete treats this as functionally equivalent to the following,
+
+    var hello = "world" document.write("\nthis is a test");
+    //                 ^
+    //                 Notice the missing semi-colon?
+
+and results in a parse error template compiling your template.
+
+The fix is as follows,
+
+    <% var hello = "world" %>
+    this is a test
+
+Which Kaete would pseudo-render as,
+
+    var hello = "world"; document.write("\nthis is a test");
+
+A good general rule to follow is, **include any semi-colon you'd use in
+regular JavaScript, for example if you weren't writing a template tag.**
 
 
 ### Variable Template Tag
 
+A variable template tag looks like this,
+
     << [... JavaScript expression to be outputted goes here ...] >>
 
+They include any valid JavaScript expression, typically variable names
+to be evaluated and outputted. In general, they **should not contain
+semi-colons.**
 
-#### Auto-escaping
+Assuming the context variables `name` and `age` are defined, here's
+a simple example.
+
+    <h1>Employee Profile</h1>
+    
+    Name: << name >>
+    Age: << age >>
+
+
+This would render as follows,
+
+    <h1>Employee Profile</h1>
+    
+    Name: John Doe
+    Age: 47
+
+
+#### HTML Entity Auto-escaping
+
+By default, the contents of a variable template tag have any HTML
+special characters auto-escaped to their entities.
+
+For example,
+
+    <% var greeting = '<h1>Hello!</h1>'; %>
+        
+    << greeting >>
+
+Renders to,
+
+    &lt;h1&gt;Hello!&lt;/h1&gt;
+
 
 ##### Disabling Auto-escape
 
+If you would like to disable HTML auto-escaping, you must use the following
+template tag,
+
     <<! [... un-escaped JavaScript expression goes here ...] >>
 
+Similar to the above,
+
+For example,
+
+    <% var greeting = '<h1>Hello!</h1>'; %>
+        
+    <<! greeting >>
+
+Renders to,
+
+    <h1>Hello!</h1>
+
+
+#### The `print(string, unescaped)` function
+
+For advanced output, a convenience function `print(string, unescaped)`
+is available for use in your code tags.
+
+This allows for text to be rendered in the template in a code tag, without
+using a variable tag.
+
+For example,
+
+    <%
+   
+    var people = ['Bob', 'Susan', 'Bill', 'Mohammed'];
+   
+    for (var i in people) {
+        print(people[i]);
+        print("\n");
+    }
+    
+    %>
+
+Renders to,
+
+    Bob
+    Susan
+    Bill
+    Mohammed
+    
 
 ### Comment Tag
 
+A comment looks like this,
+
     <# [... Comment goes here ...] #>
 
+For example,
 
-Template API
-------------
+    <# This is a really great comment! #>
 
-### The `Keate` object
-
-#### Creating a Template
-
-#### Rendering Templates
-
-
-jQuery Plug-in
---------------
 
 License
 -------
