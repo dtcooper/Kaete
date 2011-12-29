@@ -4,31 +4,31 @@
     var cache = {};
 
     // The beginning special char, eg the "<" in "<% ... %>"
-    var TAG_START = global.YAETE_TAG_START || '<';
+    var TAG_START = global.KAETE_TAG_START || '<';
 
     // The ending special char, eg the ">" in "<% ... %>"
-    var TAG_END = global.YAETE_TAG_END || '>';
+    var TAG_END = global.KAETE_TAG_END || '>';
 
     // The beginning code tag type char, eg the left "%" in "<% ... %>"
-    var TAG_CODE_START = global.YAETE_TAG_CODE_START || '%';
+    var TAG_CODE_START = global.KAETE_TAG_CODE_START || '%';
 
     // The ending code tag type char, eg the right "%" in "<% ... %>"
-    var TAG_CODE_END = global.YAETE_TAG_CODE_END || '%';
+    var TAG_CODE_END = global.KAETE_TAG_CODE_END || '%';
 
     // The beginning comment tag type char, eg the left "#" in "<# ... #>"
-    var TAG_COMMENT_START = global.YAETE_TAG_COMMENT_START || '#';
+    var TAG_COMMENT_START = global.KAETE_TAG_COMMENT_START || '#';
 
     // The ending comment tag type char, eg the right "#" in "<# ... #>"
-    var TAG_COMMENT_END = global.YAETE_TAG_COMMENT_END || '#';
+    var TAG_COMMENT_END = global.KAETE_TAG_COMMENT_END || '#';
 
     // The beginning variable tag type char, eg the inner left "<" in "<< ... >>"
-    var TAG_VARIABLE_START = global.YAETE_TAG_VARIABLE_START || '<';
+    var TAG_VARIABLE_START = global.KAETE_TAG_VARIABLE_START || '<';
 
     // The ending variable tag type char, eg the inner right ">" in "<< ... >>"
-    var TAG_VARIABLE_END = global.YAETE_TAG_VARIABLE_END || '>';
+    var TAG_VARIABLE_END = global.KAETE_TAG_VARIABLE_END || '>';
 
     // The unescaped variable signifier, eg the "!" in "<<! ... >>"
-    var TAG_VARIABLE_UNESCAPED = global.YAETE_TAG_VARIABLE_UNESCAPED || '!';
+    var TAG_VARIABLE_UNESCAPED = global.KAETE_TAG_VARIABLE_UNESCAPED || '!';
 
     var escape_regexp = function(s) {
         return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
@@ -75,7 +75,7 @@
 
     var print_array_name = '__p';  // TODO: Obfuscate this more
 
-    var Yaete = global.Yaete = function(template) {
+    var Kaete = global.Kaete = function(template) {
         this.template = template;  // TODO: No need to store this
 
         if (cache[template] === undefined) {
@@ -90,13 +90,13 @@
 
    }
 
-    Yaete.escape_html = function(s) {
+    Kaete.escape_html = function(s) {
         return ("" + s).replace(/[&<>"'\/]/g, function(match) {
             return '&#' + match.charCodeAt(0) + ';';
         });
     }
 
-    Yaete.prototype.compile = function() {
+    Kaete.prototype.compile = function() {
         // State machine for the compiler
         var state = {
             match_offset: 0,
@@ -178,8 +178,8 @@
                             // compile unescaped variable expression
                             statements.push(compile_variable(code));
                         } else {
-                            // compile escaped variable expression using Yaete.escape_html()
-                            statements.push(compile_variable('Yaete.escape_html(' + code + ')'));
+                            // compile escaped variable expression using Kaete.escape_html()
+                            statements.push(compile_variable('Kaete.escape_html(' + code + ')'));
                         }
                     } else {
                         // invalid end token, compile entire tag as string
@@ -216,17 +216,17 @@
         this.func = new Function("context", func_body);
     }
 
-    Yaete.prototype.render = function(context) {
+    Kaete.prototype.render = function(context) {
         // Call using global scope
         return this.func.apply(global, [context || {}]);
     }
 
-    Yaete._clear_cache = function() {  // TODO: Delete this helper
+    Kaete._clear_cache = function() {  // TODO: Delete this helper
         cache = {};
     }
 
-    Yaete.render = function(template, context) {
-        var t = new Yaete(template);
+    Kaete.render = function(template, context) {
+        var t = new Kaete(template);
         return t.render(context);
     }
 
