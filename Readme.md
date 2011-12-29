@@ -79,36 +79,6 @@ This would output the following *with whitespace changed for clarity,*
     Hello
 
 
-#### Semi-colon Warning
-
-Just like in pure JavaScript, semi-colons *can and often do* matter
-in your Kaete code template tags. Look at the following example,
-
-    <% var hello = "world" %>
-    this is a test
-
-
-Kaete treats this as functionally equivalent to the following,
-
-    var hello = "world" document.write("\nthis is a test");
-    //                 ^
-    //                 Notice the missing semi-colon?
-
-and results in a parse error template compiling your template.
-
-The fix is as follows,
-
-    <% var hello = "world" %>
-    this is a test
-
-Which Kaete would pseudo-render as,
-
-    var hello = "world"; document.write("\nthis is a test");
-
-A good general rule to follow is, **include any semi-colon you'd use in
-regular JavaScript, for example if you weren't writing a template tag.**
-
-
 ### Variable Template Tag
 
 A variable template tag looks like this,
