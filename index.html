@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Kaete Demo Console</title>
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<link rel="stylesheet" href="http://twitter.github.com/bootstrap/1.4.0/bootstrap.css">
+<link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.css">
+<style type="text/css">
+#header {
+    margin: 10px 10px 0 10px;
+    text-align: center;
+}
+
+#header h1 {
+    text-decoration: underline;
+}
+
+#header h3, #header h3 a {
+    font-style:italic;
+}
+
+#header h1, #header h3 {
+    margin: 0;
+    text-shadow: 0 1px 1px rgba(0,0,0,.3);
+}
+
+#content {
+    margin: 5px 10px 0 10px;
+}
+
+div.code-input, div.code-output {
+    width: 50%;
+    float: left;
+}
+
+.code-container {
+    padding: 0 10px 5px 0;
+}
+
+.padding-right {
+    padding-right: 5px;
+}
+
+.float-right {
+    float: right;
+}
+
+.btn {
+    margin-left: 5px;
+}
+
+.clear-both {
+    clear: both;
+}
+
+label.pick-json {
+    float: none;
+    margin-right: 15px;
+}
+
+#set_new_context {
+    display: none;
+}
+
+#code {
+    width: 100%;
+    font-family: Monaco, Andale Mono, Courier New, monospace;
+    resize: vertical;
+}
+
+#code.focused {
+    color: #202020;
+}
+
+#rendered_html {
+    overflow: auto;
+}
+</style>
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/javascript" src="http://ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js"></script>
+<script type="text/javascript" src="http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.js"></script>
+<script type="text/javascript">
+
+// Include kaete.js locally if we're running locally, otherwise pull from github
+(function() {
+
+    var kaete_script_path = 'kaete.js';
+    var github_raw_root = 'https://raw.github.com/dtcooper/Kaete/master/';
+
+    if (window.location.protocol.indexOf('file') == -1) {
+        kaete_script_path = github_raw_root + kaete_script_path;
+    }
+
+    var kaete_script = document.createElement('script');
+    kaete_script.type = 'text/javascript';
+    kaete_script.src = kaete_script_path;
+
+    var last_script = $('script').last().get(0);
+    last_script.parentNode.insertBefore(kaete_script, last_script);
+
+}).call(this);
+
+</script>
+<script type="text/javascript">
+
+var template;
+
+var context = {
+    people: ['David', 'Zach', 'Kaue'],
+    number: 12382,
+    test: 'testing, testing, 123.'
+}
+
+$(function() {
+
+    prettyPrint();
+
+    var default_code_value = 'Create your template here.';
+
+    $('#code').focus(function() {
+        var code_div = $(this);
+        if (code_div.val() == default_code_value) {
+            code_div.val('').addClass('focused').unbind('focus');
+        }
+    }).val(default_code_value);
+
+    $('#compile').click(function() {
+        Kaete._clear_cache();
+
+        var code = $('#code').val();
+        if (!$('#code').hasClass('focused')) {
+            code = '';
+        }
+
+        template = new Kaete(code);
+
+        $('#compiled_function').text(template.func_body);
+
+        prettyPrint();
+
+    });
+
+    $('#compile_and_render').click(function() {
+        $('#compile').click();
+
+        var rendered_template = template.render(context);
+
+        $('#rendered_html').html(rendered_template);
+    });
+
+    var saved_code;
+
+    $('#show_context').change(function() {
+        var checked = $(this).prop("checked");
+
+        if (checked) {
+            saved_code = $('#code').val();
+            $('#code').val(JSON.stringify(context, null, 4));
+            $('#compile_and_render, #compile').hide();
+            $('#set_new_context').show();
+        } else {
+            $('#code').val(saved_code);
+            $('#set_new_context').hide();
+            $('#compile_and_render, #compile').show();
+        }
+
+    });
+
+    $('#set_new_context').click(function() {
+        context = JSON.parse($('#code').val());
+        $('#show_context').click();
+    });
+
+});
+
+</script>
+</head>
+<body>
+
+<div id="header">
+    <h1>Kaete Demo Console</h1>
+    <h3><a href="https://github.com/dtcooper/Kaete">Kaete</a>'s An ECMAScript Templating Engine</h3>
+</div>
+
+<div id="content">
+    <div class="code-input">
+        <div class="padding-right">
+            <div class="code-container">
+                <textarea id="code" rows="13"></textarea>
+            </div>
+            <label class="pick-json">
+                <input class="form-stacked" type="checkbox" id="show_context">
+                <span class>Show Template Context JSON</span>
+            </label>
+            <span class="primary btn large float-right" id="compile_and_render">Compile and Render</span>
+            <span class="btn large float-right" id="compile">Compile Only</span>
+            <span class="btn large primary float-right" id="set_new_context">Set New Template Context</span>
+        </div>
+    </div>
+
+    <div class="code-output">
+        <pre class="prettyprint linenums language-js" id="compiled_function">/*
+ * Kaete Demo Console
+ *
+ * Template tags:
+ *   &lt;% ... %&gt;   for javascript
+ *   &lt;&lt; ... &gt;&gt;   for a javascript expression to be printed (no semi-colons)
+ *   &lt;&lt;! ... &gt;&gt;  for an unescaped expression to be printed
+ *   &lt;# ... #&gt;   for comments
+ *
+ *
+ */</pre>
+    </div>
+    <div class="clear-both"></div>
+
+    <hr>
+
+    <div id="rendered_html"></div>
+
+</div>
+
+</body>
+
+</html>
