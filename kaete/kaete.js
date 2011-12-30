@@ -3,32 +3,32 @@
 
     var cache = {};
 
-    // The beginning special char, eg the "<" in "<% ... %>"
-    var TAG_START = global.KAETE_TAG_START || '<';
+    // The beginning special char, eg the "[" in "[% ... %]"
+    var TAG_START = global.KAETE_TAG_START || '[';
 
-    // The ending special char, eg the ">" in "<% ... %>"
-    var TAG_END = global.KAETE_TAG_END || '>';
+    // The ending special char, eg the "]" in "[% ... %]"
+    var TAG_END = global.KAETE_TAG_END || ']';
 
-    // The beginning code tag type char, eg the left "%" in "<% ... %>"
+    // The beginning code tag type char, eg the left "%" in "[% ... %]"
     var TAG_CODE_START = global.KAETE_TAG_CODE_START || '%';
 
-    // The ending code tag type char, eg the right "%" in "<% ... %>"
+    // The ending code tag type char, eg the right "%" in "[% ... %]"
     var TAG_CODE_END = global.KAETE_TAG_CODE_END || '%';
 
-    // The beginning comment tag type char, eg the left "#" in "<# ... #>"
+    // The beginning comment tag type char, eg the left "#" in "[# ... #]"
     var TAG_COMMENT_START = global.KAETE_TAG_COMMENT_START || '#';
 
-    // The ending comment tag type char, eg the right "#" in "<# ... #>"
+    // The ending comment tag type char, eg the right "#" in "[# ... #]"
     var TAG_COMMENT_END = global.KAETE_TAG_COMMENT_END || '#';
 
-    // The beginning variable tag type char, eg the inner left "<" in "<< ... >>"
-    var TAG_VARIABLE_START = global.KAETE_TAG_VARIABLE_START || '<';
+    // The beginning variable tag type char, eg the inner left "[" in "[[ ... ]]"
+    var TAG_VARIABLE_START = global.KAETE_TAG_VARIABLE_START || '[';
 
-    // The ending variable tag type char, eg the inner right ">" in "<< ... >>"
-    var TAG_VARIABLE_END = global.KAETE_TAG_VARIABLE_END || '>';
+    // The ending variable tag type char, eg the inner right "]" in "[[ ... ]]"
+    var TAG_VARIABLE_END = global.KAETE_TAG_VARIABLE_END || ']';
 
-    // The unescaped variable signifier, eg the "!" in "<<! ... >>"
-    var TAG_VARIABLE_UNESCAPED = global.KAETE_TAG_VARIABLE_UNESCAPED || '!';
+    // The unescaped variable signifier, eg the "*" in "[[* ... ]]"
+    var TAG_VARIABLE_UNESCAPED = global.KAETE_TAG_VARIABLE_UNESCAPED || '*';
 
     var escape_regexp = function(s) {
         return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");

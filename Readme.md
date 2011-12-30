@@ -30,9 +30,9 @@ Here's a sample use of the API.
         thing: "World"
     }
 
-    var template_code = '<% for (var i = 0; i < 5; i++) { %>\n'
-        + '<p>Hello, << thing >>!</p>\n'
-        + '<% } %>';
+    var template_code = '[% for (var i = 0; i < 5; i++) { %]\n'
+        + '<p>Hello, [[ thing ]]!</p>\n'
+        + '[% } %]';
         
     var template = new Kaete(template_code);
 
@@ -58,16 +58,16 @@ Template Tags
 
 A code template tag looks like this,
 
-    <% [... JavaScript goes here ...] %>
+    [% [... JavaScript goes here ...] %]
 
 These can be used for JavaScript in your template. An example below renders
 "Hello" five times,
 
-    <% for (var i = 0; i < 5; i++) { %>
+    [% for (var i = 0; i < 5; i++) { %]
 
         Hello
 
-    <% } %>
+    [% } %]
 
 
 This would output the following *with whitespace changed for clarity,*
@@ -83,7 +83,7 @@ This would output the following *with whitespace changed for clarity,*
 
 A variable template tag looks like this,
 
-    << [... JavaScript expression to be outputted goes here ...] >>
+    [[ [... JavaScript expression to be outputted goes here ...] ]]
 
 They include any valid JavaScript expression, typically variable names
 to be evaluated and outputted. In general, they **should not contain
@@ -94,8 +94,8 @@ a simple example.
 
     <h1>Employee Profile</h1>
     
-    Name: << name >>
-    Age: << age >>
+    Name: [[ name ]]
+    Age: [[ age ]]
 
 
 This would render as follows,
@@ -113,9 +113,9 @@ special characters auto-escaped to their entities.
 
 For example,
 
-    <% var greeting = '<h1>Hello!</h1>'; %>
+    [% var greeting = '<h1>Hello!</h1>'; %]
         
-    << greeting >>
+    [[ greeting ]]
 
 Renders to,
 
@@ -127,15 +127,15 @@ Renders to,
 If you would like to disable HTML auto-escaping, you must use the following
 template tag,
 
-    <<! [... un-escaped JavaScript expression goes here ...] >>
+    [[* [... un-escaped JavaScript expression goes here ...] ]]
 
 Similar to the above,
 
 For example,
 
-    <% var greeting = '<h1>Hello!</h1>'; %>
+    [% var greeting = '<h1>Hello!</h1>'; %]
         
-    <<! greeting >>
+    [[* greeting ]]
 
 Renders to,
 
@@ -152,7 +152,7 @@ using a variable tag.
 
 For example,
 
-    <%
+    [%
    
     var people = ['Bob', 'Susan', 'Bill', 'Mohammed'];
    
@@ -161,7 +161,7 @@ For example,
         print("\n");
     }
     
-    %>
+    %]
 
 Renders to,
 
@@ -175,11 +175,11 @@ Renders to,
 
 A comment looks like this,
 
-    <# [... Comment goes here ...] #>
+    [# [... Comment goes here ...] #]
 
 For example,
 
-    <# This is a really great comment! #>
+    [# This is a really great comment! #]
 
 
 License

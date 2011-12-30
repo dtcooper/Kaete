@@ -30,24 +30,24 @@ $(function() {
     module("Variable Tag");
 
     test("One variable", function() {
-        var template = "<< name >>";
+        var template = "[[ name ]]";
         var context = {name: "Bernard"};
         equals("Bernard", Kaete.render(template, context));
     });
 
     test("One variable with padded text", function() {
-        var template = "All aboard the << vessel >>.";
+        var template = "All aboard the [[ vessel ]].";
         var context = {vessel: "sailboat"};
         equals("All aboard the sailboat.", Kaete.render(template, context));
     });
 
     test("A JavaScript expression", function() {
-        var template = "Did you know that 1 + 2 = << 1 + 2 >>?";
+        var template = "Did you know that 1 + 2 = [[ 1 + 2 ]]?";
         equals("Did you know that 1 + 2 = 3?", Kaete.render(template));
     });
 
     test("Numerous variables", function() {
-        var template = '"<< noun >> << verb >> << adjective >> << plural_noun >><< full_stop >>"';
+        var template = '"[[ noun ]] [[ verb ]] [[ adjective ]] [[ plural_noun ]][[ full_stop ]]"';
         var context = {noun: "Bob", verb: "likes", adjective: "small", plural_noun: "dogs", full_stop: "."};
         equals('"Bob likes small dogs."', Kaete.render(template, context));
     });
@@ -56,12 +56,12 @@ $(function() {
     module("Code Tag");
 
     test("Set and print a variable", function() {
-        var template = 'code="<% var test = "Hello, World!" %>", var="<< test >>"';
+        var template = 'code="[% var test = "Hello, World!" %]", var="[[ test ]]"';
         equals('code="", var="Hello, World!"', Kaete.render(template));
     });
 
     test("Looping", function() {
-        var template = "I like to count. <% for (var num = 1; num < 10; num++) { %><< num >><% } %>!";
+        var template = "I like to count. [% for (var num = 1; num < 10; num++) { %][[ num ]][% } %]!";
         equals('I like to count. 123456789!', Kaete.render(template));
     });
 
