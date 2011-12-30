@@ -1,10 +1,10 @@
 Kaete
 =====
 
-**K**aete's **A**n **E**CMAScript **T**emplating **E**ngine.
+**K**aete's **A**nother **E**CMAScript **T**emplating **E**ngine.
 
-*Kaete is in active development and is very turbulent right now. The API and
-template language may change as features and implementation are not yet
+*Kaete is in active development and is somewhat turbulent right now. The API
+and template language may change as features and implementation are not yet
 finalized. Expect bugs!*
 
 
