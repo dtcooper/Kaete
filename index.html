@@ -70,9 +70,6 @@ label.pick-json {
     width: 100%;
     font-family: Monaco, Andale Mono, Courier New, monospace;
     resize: vertical;
-}
-
-#code.focused {
     color: #202020;
 }
 
@@ -120,26 +117,31 @@ $(function() {
 
     prettyPrint();
 
-    var default_code_value = 'Create your template here.';
+    var code_div = $('#code');
 
-    $('#code').focus(function() {
-        var code_div = $(this);
-        if (code_div.val() == default_code_value) {
-            code_div.val('').addClass('focused').unbind('focus');
+    if (window.localStorage) {
+        if (window.localStorage.kaete_code) {
+            code_div.val(window.localStorage.kaete_code);
         }
-    }).val(default_code_value);
+
+        code_div.keyup(function() {
+            window.localStorage.kaete_code = code_div.val();
+        });
+
+    }
+
+    $('#clear_code').click(function() {
+        code_div.val('').keyup();
+    });
 
     $('#compile').click(function() {
         Kaete._clear_cache();
 
-        var code = $('#code').val();
-        if (!$('#code').hasClass('focused')) {
-            code = '';
-        }
+        var code = code_div.val();
 
         template = new Kaete(code);
 
-        $('#compiled_function').text(template.func_body);
+        $('#compiled_function').text(template.func.toString());
 
         prettyPrint();
 
@@ -160,13 +162,13 @@ $(function() {
 
         if (checked) {
             saved_code = $('#code').val();
-            $('#code').val(JSON.stringify(context, null, 4));
-            $('#compile_and_render, #compile').hide();
+            code_div.val(JSON.stringify(context, null, 4));
+            $('#compile_and_render, #compile, #clear_code').hide();
             $('#set_new_context').show();
         } else {
-            $('#code').val(saved_code);
+            code_div.val(saved_code);
             $('#set_new_context').hide();
-            $('#compile_and_render, #compile').show();
+            $('#compile_and_render, #compile, #clear_code').show();
         }
 
     });
@@ -199,6 +201,7 @@ $(function() {
             </label>
             <span class="primary btn large float-right" id="compile_and_render">Compile and Render</span>
             <span class="btn large float-right" id="compile">Compile Only</span>
+            <span class="btn large float-right danger" id="clear_code">Clear</span>
             <span class="btn large primary float-right" id="set_new_context">Set New Template Context</span>
         </div>
     </div>
@@ -212,7 +215,6 @@ $(function() {
  *   &lt;&lt; ... &gt;&gt;   for a javascript expression to be printed (no semi-colons)
  *   &lt;&lt;! ... &gt;&gt;  for an unescaped expression to be printed
  *   &lt;# ... #&gt;   for comments
- *
  *
  */</pre>
     </div>
