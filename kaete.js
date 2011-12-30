@@ -35,46 +35,28 @@
     }
 
     var PARSER = new RegExp(
-        // group 1: text, non-greedy
-        '([\\s\\S]*?)'
+        // Start of tag, start of non-capturing group for tag types.
+        escape_regexp(TAG_START) + '(?:'
 
-        // Group 2: start of entire tag
-        + '(' + escape_regexp(TAG_START)
+        // Match a code tag, group 1 as matched code, end of code tag;
+        + escape_regexp(TAG_CODE_START) + '([\\s\\S]+?)' + escape_regexp(TAG_CODE_END)
 
-        // group 3: start of tag type
-        + '(' + escape_regexp(TAG_CODE_START) + '|' + escape_regexp(TAG_VARIABLE_START) + ')'
+        // or match a variable tag, group 2 as the optional unescape char,
+        + '|' + escape_regexp(TAG_VARIABLE_START) + '(' + escape_regexp(TAG_VARIABLE_UNESCAPED) + '?)'
 
-        // group 4: unescape token for tag variable only
-        + '(' + escape_regexp(TAG_VARIABLE_UNESCAPED) + '?)'
+        // group 3 as matched expression, end of variable tag;
+        + '([\\s\\S]+?)' + escape_regexp(TAG_VARIABLE_END)
 
-        // group 5: code, non-greedy
-        + '([\\s\\S]+?)'
+        // or match a complete comment tag, no need to group
+        + '|' + escape_regexp(TAG_COMMENT_START) + '[\\s\\S]+?' + escape_regexp(TAG_COMMENT_END)
 
-        // group 6: end of tag type
-        + '(' + escape_regexp(TAG_CODE_END) + '|' + escape_regexp(TAG_VARIABLE_END) + ')'
+        // end of non-capturing group, end of tag, end of rexexp (with global flag)
+        + ')' + escape_regexp(TAG_END), 'g');
 
-        // end of tag, end of regexp
-        + escape_regexp(TAG_END) + ')', 'g');
-
-
-    var COMMENT_STRIPPER = new RegExp(
-        // start of entire tag
-        escape_regexp(TAG_START)
-
-        // start of comment tag
-        + escape_regexp(TAG_COMMENT_START)
-
-        // comment, non-greedy
-        + '([\\s\\S]+?)'
-
-        // end of comment tag
-        + escape_regexp(TAG_COMMENT_END)
-
-        // end of tag, end of regexp
-        + escape_regexp(TAG_END), 'g');
-
-    var print_array_name = '__p';  // TODO: Obfuscate these more
+    // TODO: Obfuscate these a little more
+    var print_array_name = '__p';
     var context_name = '__context';
+
 
     var Kaete = global.Kaete = function(template) {
         this.template = template;  // TODO: No need to store this
@@ -88,7 +70,8 @@
 
         return;
 
-   }
+    }
+
 
     Kaete.escape_html = function(s) {
         return ("" + s).replace(/[&<>"'\/]/g, function(match) {
@@ -96,137 +79,96 @@
         });
     }
 
+
     Kaete.prototype.compile = function() {
-        // State machine for the compiler
-        var state = {
-            match_offset: 0,
-            in_string: false
-        }
+        // Compiler state variables
+        var last_match_end = 0,  // End of the last tag match in template
+            // Whether or not what the compiler's parsing is to be printed
+            print_mode = false,
+            // An arry to push compiled statements to
+            statements = [];
 
-        // Strip out comments
-        var stripped_template = this.template.replace(COMMENT_STRIPPER, '');
+        // Compile a variable and push output onto statements
+        var compile_variable = function(expression, unescaped) {
+            if (expression) {
+                if (print_mode) {
+                    statements.push(",");
+                } else {
+                    print_mode = true;
+                    statements.push(print_array_name, ".push(")
+                }
+                statements.push("\n");
 
-        // Helper for compiling a variable << ... >> tag in the parser
-        var compile_variable = function(code) {
-            var statements = [];
+                if (!unescaped) {
+                    statements.push('Kaete.escape_html(');
+                }
 
-            if (state.in_string) {
-                statements.push(", ");
-            } else {
-                state.in_string = true;
-                statements.push(print_array_name + ".push(");
+                statements.push(expression);
+
+                if (!unescaped) {
+                    statements.push(')');
+                }
             }
-            statements.push(code);
-
-            return statements.join("");
         }
 
-        // Helper for compiling a string, ie something not in a template tag
         var compile_string = function(string) {
-            return compile_variable(JSON.stringify(string));
+            if (string) {
+                compile_variable(JSON.stringify(string), true);
+            }
         }
 
-        // Helper for compiling code, ie <% ... %>
         var compile_code = function(code) {
-            var statements = [];
+            if (code) {
+                if (print_mode) {
+                    statements.push(");\n");
+                    print_mode = false;
+                }
 
-            if (state.in_string) {
-                statements.push(");\n");
-                state.in_string = false;
+                statements.push(code, "\n");
             }
-
-            statements.push(code + "\n");
-            return statements.join("");
         }
 
-        // Main parser
-        //
-        // Goes through stripped_template replacing optional text followed by a
-        // tag iteratively. When complete, func_body will be completely parsed
-        // except for the characters in stripped_template after state.match_offset
-        var func_body = stripped_template.replace(PARSER, function(match, text, tag, tag_start, unescape, code, tag_end, offset) {
-            // sanity check to make sure match_offset == offset
-            // TODO: can safely delete after testing
-            if (state.match_offset != offset) {
-                alert("state.match_offset (" + state.match_offset + ") != offset (" + offset + ")");
-            }
+        // Build function beginning
+        statements.push(
+            "var ", print_array_name, " = [];\n",
+            "var print = function(s, u) { ", print_array_name, ".push(u ? s : Kaete.escape_html(s)); };\n",
+            "with (", context_name, ") {\n");
 
-            // list of statements to output
-            var statements = [];
+        // Walk through template looking for template tags
+        var match;
+        while (match = PARSER.exec(this.template)) {
+            // Refer to PARSER for match indexes
+            compile_string(this.template.slice(last_match_end, match.index));
+            compile_code(match[1]);
+            compile_variable(match[3], match[2]);
 
-            // update position to end of match
-            state.match_offset = offset + match.length;
-
-            // compile text if some exsts
-            if (text) {
-                statements.push(compile_string(text));
-            }
-
-            // Compile code blocks
-            switch (tag_start) {
-                case TAG_CODE_START:
-                    if (tag_end == TAG_CODE_END) {
-                        // compile code, include unescape token (if it exists)
-                        statements.push(compile_code(unescape + code));
-                    } else {
-                        // invalid end token, compile entire tag as string
-                        statements.push(compile_string(tag));
-                    }
-                    break;
-
-                case TAG_VARIABLE_START:
-                    if (tag_end == TAG_VARIABLE_END) {
-                        if (unescape) {
-                            // compile unescaped variable expression
-                            statements.push(compile_variable(code));
-                        } else {
-                            // compile escaped variable expression using Kaete.escape_html()
-                            statements.push(compile_variable('Kaete.escape_html(' + code + ')'));
-                        }
-                    } else {
-                        // invalid end token, compile entire tag as string
-                        statements.push(compile_string(tag));
-                    }
-                    break;
-            }
-
-            return statements.join("");
-        });
-
-        // Finish compiling the trailing string
-        if (state.match_offset < stripped_template.length) {
-            var uncompiled_pos = func_body.length - stripped_template.length + state.match_offset;
-            // strip off uncompiled chars from func_body, compile them
-            func_body = func_body.substr(0, uncompiled_pos)
-                + compile_string(func_body.substr(uncompiled_pos));
+            last_match_end = match.index + match[0].length;
         }
 
-        // Close open function, if one exists
-        if (state.in_string) {
-            func_body += ');';
+        // Compile left over text
+        compile_string(this.template.substr(last_match_end));
+
+        // Close off an open bracket if in print mode
+        if (print_mode) {
+            statements.push(");");
         }
 
-        // Wrap beginning and end of function with argument context
-        func_body = "var " + print_array_name + " = [];\n"
-            + "var print = function(s, u) { " + print_array_name + ".push(u ? s : Kaete.escape_html(s)); };\n"
-            + "with (" + context_name + ") {\n"
-            + func_body + "\n"
-            + "};\n"
-            + "return " + print_array_name + '.join("");';
+        statements.push("\n};\n",
+            "return ", print_array_name, '.join("");');
 
-        this.func_body = func_body;  // TODO: Don't need to store this
+        var func_body = statements.join("");
         try {
             this.func = new Function(context_name, func_body);
         } catch (exp) {
             alert("Error compiling template.\n\n" + exp.message);
-            this.func = null;
+            this.func = func_body;  // TODO: don't define function as a string (use null)
         }
     }
 
     Kaete.prototype.render = function(context) {
-        // Call with global scope
-        if (this.func) {
+        if (typeof this.func == "function") {  // TODO: function should be null if not defined
             try {
+                // Call with global scope
                 return this.func.call(global, context || {});
             } catch (exp) {
                 alert("Error rendering template.\n\n" + exp.message);
