@@ -58,7 +58,7 @@ Template Tags
 
 A code template tag looks like this,
 
-    [% [... JavaScript goes here ...] %]
+    [% ... JavaScript goes here ... %]
 
 These can be used for JavaScript in your template. An example below renders
 "Hello" five times,
@@ -83,7 +83,7 @@ This would output the following *with whitespace changed for clarity,*
 
 A variable template tag looks like this,
 
-    [[ [... JavaScript expression to be outputted goes here ...] ]]
+    [[ ... JavaScript expression to be outputted goes here ... ]]
 
 They include any valid JavaScript expression, typically variable names
 to be evaluated and outputted. In general, they **should not contain
@@ -127,7 +127,7 @@ Renders to,
 If you would like to disable HTML auto-escaping, you must use the following
 template tag,
 
-    [[* [... un-escaped JavaScript expression goes here ...] ]]
+    [[* ... un-escaped JavaScript expression goes here ... ]]
 
 Similar to the above,
 
@@ -175,7 +175,7 @@ Renders to,
 
 A comment looks like this,
 
-    [# [... Comment goes here ...] #]
+    [# ... Comment goes here ... #]
 
 For example,
 
