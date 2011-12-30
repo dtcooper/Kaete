@@ -2,6 +2,7 @@
                     "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
+<title>Kaete qUnits Tests</title>
 <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
 <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
 <script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
@@ -50,6 +51,14 @@ $(function() {
         var template = '"[[ noun ]] [[ verb ]] [[ adjective ]] [[ plural_noun ]][[ full_stop ]]"';
         var context = {noun: "Bob", verb: "likes", adjective: "small", plural_noun: "dogs", full_stop: "."};
         equals('"Bob likes small dogs."', Kaete.render(template, context));
+    });
+
+    test("Escaped/Unescaped variables", function() {
+        var template = '[[ greeting ]]';
+        var template_unescaped = '[[* greeting ]]';
+        var context = {greeting: '<h1>Hi, mom!</h1>'};
+        equals('&#60;h1&#62;Hi, mom!&#60;&#47;h1&#62;', Kaete.render(template, context));
+        equals('<h1>Hi, mom!</h1>', Kaete.render(template_unescaped, context));
     });
 
 
