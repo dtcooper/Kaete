@@ -2,7 +2,7 @@
                     "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<title>Kaete qUnits Tests</title>
+<title>Kaete QUnit Tests</title>
 <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
 <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
 <script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
@@ -74,13 +74,23 @@ $(function() {
         equals('I like to count. 123456789!', Kaete.render(template));
     });
 
+    test("print() function", function() {
+        var template = "<p>[% print('<strong>', 'hello', '</strong>'); %]</p>";
+        equals('<p>&#60;strong&#62;hello&#60;&#47;strong&#62;</p>', Kaete.render(template));
+    });
+
+    test("print_unescaped() function", function() {
+        var template = "<p>[% print_unescaped('<strong>', 'hello', '</strong>'); %]</p>";
+        equals('<p><strong>hello</strong></p>', Kaete.render(template));
+    });
+
 
 });
 </script>
 
 </head>
 <body>
-    <h1 id="qunit-header">QUnit example</h1>
+    <h1 id="qunit-header">Kaete QUnit Tests</h1>
     <h2 id="qunit-banner"></h2>
     <div id="qunit-testrunner-toolbar"></div>
     <h2 id="qunit-userAgent"></h2>

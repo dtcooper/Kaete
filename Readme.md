@@ -142,13 +142,13 @@ Renders to,
     <h1>Hello!</h1>
 
 
-#### The `print(string, unescaped)` function
+#### The `print(string)` and `print_unescaped()` functions
 
-For advanced output, a convenience function `print(string, unescaped)`
-is available for use in your code tags.
+For advanced output, convenience functions `print()` and `print_unescaped()`
+are available for use in your code tags.
 
-This allows for text to be rendered in the template in a code tag, without
-using a variable tag.
+These allow for text to be rendered in the template in a code tag, without
+using a variable tag. They print their arguments.
 
 For example,
 
@@ -156,9 +156,8 @@ For example,
    
     var people = ['Bob', 'Susan', 'Bill', 'Mohammed'];
    
-    for (var i in people) {
-        print(people[i]);
-        print("\n");
+    for (var i = 0; i < people.length; i++) {
+        print(people[i], "\n");
     }
     
     %]
@@ -169,6 +168,10 @@ Renders to,
     Susan
     Bill
     Mohammed
+
+
+`print_unescaped()` works similarly, but will not escape HTML entities in
+output.
     
 
 ### Comment Tag

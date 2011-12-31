@@ -92,12 +92,11 @@
         var compile_variable = function(expression, unescaped) {
             if (expression) {
                 if (print_mode) {
-                    statements.push(",");
+                    statements.push(",\n");
                 } else {
                     print_mode = true;
                     statements.push(print_array_name, ".push(")
                 }
-                statements.push("\n");
 
                 if (!unescaped) {
                     statements.push('Kaete.escape_html(');
@@ -131,7 +130,8 @@
         // Build function beginning
         statements.push(
             "var ", print_array_name, " = [];\n",
-            "var print = function(s, u) { ", print_array_name, ".push(u ? s : Kaete.escape_html(s)); };\n",
+            "var print_unescaped = function() { ", print_array_name, ".push.apply(", print_array_name, ", arguments); };\n",
+            "var print = function() { for (var i = 0; i < arguments.length; i++) { ", print_array_name, ".push(Kaete.escape_html(arguments[i])); }; };\n",
             "with (", context_name, ") {\n");
 
         // Walk through template looking for template tags
