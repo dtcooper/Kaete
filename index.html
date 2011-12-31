@@ -118,7 +118,7 @@ $(function() {
     prettyPrint();
 
     var code_div = $('#code');
-    code_div.val("[# An example template. Click \"Render and Compile\" below. #]\n<h1>Kaete Example Template</h1>\n\n[# The following context variables are defined: people, number, test #]\n<h2>[[ test ]]</h2>\n\n<ol> [# Loop through people, assigning person and displaying the list #]\n[% for (var i in people) { \n     var person = people[i] %]\n    <li>[[ person ]]</li>\n[% } %]</ol>\n\n<p>I can also add! 1 + 1 = [[ 1 + 1 ]]!</p>");
+    code_div.val("[# An example template. Click \"Render and Compile\" below. #]\n<h1>Kaete Example Template</h1>\n\n[# The following context variables are defined: people, number, test #]\n<h2>[[ test ]]</h2>\n\n<ol> [# Loop through people, assigning person and displaying the list #]\n[% for (var i = 0; i < people.length; i++) { \n     var person = people[i] %]\n    <li>[[ person ]]</li>\n[% } %]\n</ol>\n\n<p>I can also add! 1 + 1 = [[ 1 + 1 ]]!</p>");
 
     if (window.localStorage) {
         if (window.localStorage.kaete_code) {
