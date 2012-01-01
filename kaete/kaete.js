@@ -3,78 +3,80 @@
 
     var cache = {};
 
-    // The beginning special char, eg the "[" in "[% ... %]"
-    var TAG_START = global.KAETE_TAG_START || '[';
-
-    // The ending special char, eg the "]" in "[% ... %]"
-    var TAG_END = global.KAETE_TAG_END || ']';
-
-    // The beginning code tag type char, eg the left "%" in "[% ... %]"
-    var TAG_CODE_START = global.KAETE_TAG_CODE_START || '%';
-
-    // The ending code tag type char, eg the right "%" in "[% ... %]"
-    var TAG_CODE_END = global.KAETE_TAG_CODE_END || '%';
-
-    // The beginning comment tag type char, eg the left "#" in "[# ... #]"
-    var TAG_COMMENT_START = global.KAETE_TAG_COMMENT_START || '#';
-
-    // The ending comment tag type char, eg the right "#" in "[# ... #]"
-    var TAG_COMMENT_END = global.KAETE_TAG_COMMENT_END || '#';
-
-    // The beginning variable tag type char, eg the inner left "[" in "[[ ... ]]"
-    var TAG_VARIABLE_START = global.KAETE_TAG_VARIABLE_START || '[';
-
-    // The ending variable tag type char, eg the inner right "]" in "[[ ... ]]"
-    var TAG_VARIABLE_END = global.KAETE_TAG_VARIABLE_END || ']';
-
-    // The unescaped variable signifier, eg the "*" in "[[* ... ]]"
-    var TAG_VARIABLE_UNESCAPED = global.KAETE_TAG_VARIABLE_UNESCAPED || '*';
-
-    var escape_regexp = function(s) {
-        return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-    }
-
-    var PARSER = new RegExp(
-        // Start of tag, start of non-capturing group for tag types.
-        escape_regexp(TAG_START) + '(?:'
-
-        // Match a code tag, group 1 as matched code, end of code tag;
-        + escape_regexp(TAG_CODE_START) + '([\\s\\S]+?)' + escape_regexp(TAG_CODE_END)
-
-        // or match a variable tag, group 2 as the optional unescape char,
-        + '|' + escape_regexp(TAG_VARIABLE_START) + '(' + escape_regexp(TAG_VARIABLE_UNESCAPED) + '?)'
-
-        // group 3 as matched expression, end of variable tag;
-        + '([\\s\\S]+?)' + escape_regexp(TAG_VARIABLE_END)
-
-        // or match a complete comment tag, no need to group
-        + '|' + escape_regexp(TAG_COMMENT_START) + '[\\s\\S]+?' + escape_regexp(TAG_COMMENT_END)
-
-        // end of non-capturing group, end of tag, end of rexexp (with global flag)
-        + ')' + escape_regexp(TAG_END), 'g');
-
-    // TODO: Obfuscate these a little more
-    var print_array_name = '__p';
-    var context_name = '__context';
-
-
     var Kaete = global.Kaete = function(template) {
         this.template = template;  // TODO: No need to store this
 
-        if (cache[template] === undefined) {
+        if (typeof cache[template] === "undefined") {
             this.compile();
             cache[template] = this.func;
         } else {
             this.func = cache[template];
         }
+    }
 
-        return;
+    // The beginning special char, eg the "[" in "[% ... %]"
+    Kaete.TAG_START = '[';
+
+    // The ending special char, eg the "]" in "[% ... %]"
+    Kaete.TAG_END = ']';
+
+    // The beginning code tag type char, eg the left "%" in "[% ... %]"
+    Kaete.TAG_CODE_START = '%';
+
+    // The ending code tag type char, eg the right "%" in "[% ... %]"
+    Kaete.TAG_CODE_END = '%';
+
+    // The beginning comment tag type char, eg the left "#" in "[# ... #]"
+    Kaete.TAG_COMMENT_START = '#';
+
+    // The ending comment tag type char, eg the right "#" in "[# ... #]"
+    Kaete.TAG_COMMENT_END = '#';
+
+    // The beginning variable tag type char, eg the inner left "[" in "[[ ... ]]"
+    Kaete.TAG_VARIABLE_START = '[';
+
+    // The ending variable tag type char, eg the inner right "]" in "[[ ... ]]"
+    Kaete.TAG_VARIABLE_END = ']';
+
+    // The unescaped variable signifier, eg the "*" in "[[* ... ]]"
+    Kaete.TAG_VARIABLE_UNESCAPED = '*';
+
+
+    var parser;
+
+    var generate_parser = function() {
+        var escape_regexp = function(s) {
+            return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+        }
+
+        parser = new RegExp(
+            // Start of tag, start of non-capturing group for tag types.
+            escape_regexp(Kaete.TAG_START) + '(?:'
+
+            // Match a code tag, group 1 as matched code, end of code tag;
+            + escape_regexp(Kaete.TAG_CODE_START) + '([\\s\\S]+?)' + escape_regexp(Kaete.TAG_CODE_END)
+
+            // or match a variable tag, group 2 as the optional unescape char,
+            + '|' + escape_regexp(Kaete.TAG_VARIABLE_START) + '(' + escape_regexp(Kaete.TAG_VARIABLE_UNESCAPED) + '?)'
+
+            // group 3 as matched expression, end of variable tag;
+            + '([\\s\\S]+?)' + escape_regexp(Kaete.TAG_VARIABLE_END)
+
+            // or match a complete comment tag, no need to group
+            + '|' + escape_regexp(Kaete.TAG_COMMENT_START) + '[\\s\\S]+?' + escape_regexp(Kaete.TAG_COMMENT_END)
+
+            // end of non-capturing group, end of tag, end of rexexp (with global flag)
+            + ')' + escape_regexp(Kaete.TAG_END), 'g');
 
     }
 
+    // TODO: Obfuscate these a little more
+    var print_array_name = '__p';
+    var context_name = '__context';
 
+    var escape_html_regexp = /[&<>"'\/]/g;
     Kaete.escape_html = function(s) {
-        return ("" + s).replace(/[&<>"'\/]/g, function(match) {
+        return ("" + s).replace(escape_html_regexp, function(match) {
             return '&#' + match.charCodeAt(0) + ';';
         });
     }
@@ -87,6 +89,10 @@
             print_mode = false,
             // An arry to push compiled statements to
             statements = [];
+
+        if (!parser) {
+            generate_parser();
+        }
 
         // Compile a variable and push output onto statements
         var compile_variable = function(expression, unescaped) {
@@ -136,7 +142,7 @@
 
         // Walk through template looking for template tags
         var match;
-        while (match = PARSER.exec(this.template)) {
+        while (match = parser.exec(this.template)) {
             // Refer to PARSER for match indexes
             compile_string(this.template.slice(last_match_end, match.index));
             compile_code(match[1]);
@@ -175,7 +181,7 @@
                 return "Couldn't render template.";
             }
         } else {
-            return "Couldn't compile template."
+            return "Couldn't compile template.";
         }
     }
 
@@ -186,6 +192,21 @@
     Kaete.render = function(template, context) {
         var t = new Kaete(template);
         return t.render(context);
+    }
+
+    Kaete.configure = function(options) {
+        if (options) {
+            for (var option in options) {
+                // make sure it's uppercase in a naive attempt to safeguard the namespace
+                if (/^[A-Z_0-9]+$/.test(option) && (typeof Kaete[option] != 'undefined')) {
+                    Kaete[option] = options[option];
+                } else {
+                    alert("Kaete.configure() -- Invalid option: " + option);
+                }
+            }
+        }
+
+        generate_parser();
     }
 
 }).call(this);
