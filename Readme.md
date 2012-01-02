@@ -21,6 +21,13 @@ You can test out the development version of Kaete in this nifty
 [demo console](http://dtcooper.github.com/Kaete/).
 
 
+### Requirements
+
+The only requirement is the `JSON` object, specifically for `JSON.stringify`.
+Most modern browsers provide this, but an implementation can be included from
+`json2.js` at <https://github.com/douglascrockford/JSON-js>.
+
+
 Template API
 ------------
 
