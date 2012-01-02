@@ -86,6 +86,57 @@ $(function() {
     });
 
 
+    module("Basic Errors");
+
+    test("Compile time error", function() {
+        var expected_message;
+        try {
+            new Function(".");
+        } catch (exception) {
+            expected_message = exception.message;
+        }
+
+        var template = "[% . %]";
+        equals("Error compiling template: " + expected_message, Kaete.render(template));
+    });
+
+    test("Render time error", function() {
+        var bad_name = "__this_name_should_not_be_defined_BSLDBSKDJBS";
+
+        var test_func = new Function(bad_name);
+        var expected_message;
+        try {
+            test_func();
+        } catch (exception) {
+            expected_message = exception.message;
+        }
+
+        var template = "[[ " + bad_name + " ]]";
+        equals("Error rendering template: " + expected_message, Kaete.render(template));
+    });
+
+
+    module("Configuring");
+
+    test("New Template Tags", function() {
+        var old_tag_start = Kaete.TAG_START;
+        var old_tag_end = Kaete.TAG_END;
+
+        Kaete.configure({
+            TAG_START: "<",
+            TAG_END: ">"
+        });
+
+        var template = "<# Comment #>Testing: <% for (var i = 1; i <= 3; i++) { %><[ i ]><% } %>.";
+        equals("Testing: 123.", Kaete.render(template));
+
+        Kaete.configure({
+            TAG_START: old_tag_start,
+            TAG_END: old_tag_end
+        });
+
+    });
+
 });
 </script>
 
