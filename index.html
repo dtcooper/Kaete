@@ -85,6 +85,7 @@ label.pick-json {
 
 // Include kaete.js locally if we're running locally, otherwise pull from github
 (function() {
+    var global = this;
 
     var kaete_script_path = 'kaete.js';
     var github_raw_root = 'https://raw.github.com/dtcooper/Kaete/master/kaete/';
@@ -97,89 +98,85 @@ label.pick-json {
     kaete_script.type = 'text/javascript';
     kaete_script.src = kaete_script_path;
 
+    kaete_script.onload = function() {
+        $(function() {
+
+            var context = global.context = {
+                people: ['David', 'Zach', 'Kaue'],
+                number: 12382,
+                test: 'testing, testing, 123.'
+            }
+
+            prettyPrint();
+
+            var code_div = $('#code');
+            code_div.val("[# An example template. Click \"Render and Compile\" below. #]\n<h1>Kaete Example Template</h1>\n\n[# The following context variables are defined: people, number, test #]\n<h2>[[ test ]]</h2>\n\n<ol> [# Loop through people, assigning person and displaying the list #]\n[% for (var i = 0; i < people.length; i++) { \n     var person = people[i] %]\n    <li>[[ person ]]</li>\n[% } %]\n</ol>\n\n<p>I can also add! 1 + 1 = [[ 1 + 1 ]]!</p>");
+
+            if (window.localStorage) {
+                if (window.localStorage.kaete_code) {
+                    code_div.val(window.localStorage.kaete_code);
+                }
+
+                code_div.keyup(function() {
+                    window.localStorage.kaete_code = code_div.val();
+                });
+
+            }
+
+            $('#clear_code').click(function() {
+                code_div.val('').keyup();
+            });
+
+            $('#compile').click(function() {
+                var code = code_div.val();
+
+                Kaete._clear_cache();
+                var template = global.template = new Kaete(code);
+
+                $('#compiled_function').text(template.func_body);
+
+                prettyPrint();
+
+            });
+
+            $('#compile_and_render').click(function() {
+                $('#compile').click();
+
+                var rendered_template = template.render(context);
+
+                $('#rendered_html').html(rendered_template);
+            });
+
+            var saved_code;
+
+            $('#show_context').change(function() {
+                var checked = $(this).prop("checked");
+
+                if (checked) {
+                    saved_code = $('#code').val();
+                    code_div.val(JSON.stringify(context, null, 4));
+                    $('#compile_and_render, #compile, #clear_code').hide();
+                    $('#set_new_context').show();
+                } else {
+                    code_div.val(saved_code);
+                    $('#set_new_context').hide();
+                    $('#compile_and_render, #compile, #clear_code').show();
+                }
+
+            });
+
+            $('#set_new_context').click(function() {
+                context = JSON.parse($('#code').val());
+                $('#show_context').click();
+            });
+
+        });
+    };
+
     var last_script = $('script').last().get(0);
     last_script.parentNode.insertBefore(kaete_script, last_script);
 
 }).call(this);
-
-</script>
-<script type="text/javascript">
-
-var template;
-
-var context = {
-    people: ['David', 'Zach', 'Kaue'],
-    number: 12382,
-    test: 'testing, testing, 123.'
-}
-
-$(function() {
-
-    prettyPrint();
-
-    var code_div = $('#code');
-    code_div.val("[# An example template. Click \"Render and Compile\" below. #]\n<h1>Kaete Example Template</h1>\n\n[# The following context variables are defined: people, number, test #]\n<h2>[[ test ]]</h2>\n\n<ol> [# Loop through people, assigning person and displaying the list #]\n[% for (var i = 0; i < people.length; i++) { \n     var person = people[i] %]\n    <li>[[ person ]]</li>\n[% } %]\n</ol>\n\n<p>I can also add! 1 + 1 = [[ 1 + 1 ]]!</p>");
-
-    if (window.localStorage) {
-        if (window.localStorage.kaete_code) {
-            code_div.val(window.localStorage.kaete_code);
-        }
-
-        code_div.keyup(function() {
-            window.localStorage.kaete_code = code_div.val();
-        });
-
-    }
-
-    $('#clear_code').click(function() {
-        code_div.val('').keyup();
-    });
-
-    $('#compile').click(function() {
-        Kaete._clear_cache();
-
-        var code = code_div.val();
-
-        template = new Kaete(code);
-
-        $('#compiled_function').text(template.func.toString());
-
-        prettyPrint();
-
-    });
-
-    $('#compile_and_render').click(function() {
-        $('#compile').click();
-
-        var rendered_template = template.render(context);
-
-        $('#rendered_html').html(rendered_template);
-    });
-
-    var saved_code;
-
-    $('#show_context').change(function() {
-        var checked = $(this).prop("checked");
-
-        if (checked) {
-            saved_code = $('#code').val();
-            code_div.val(JSON.stringify(context, null, 4));
-            $('#compile_and_render, #compile, #clear_code').hide();
-            $('#set_new_context').show();
-        } else {
-            code_div.val(saved_code);
-            $('#set_new_context').hide();
-            $('#compile_and_render, #compile, #clear_code').show();
-        }
-
-    });
-
-    $('#set_new_context').click(function() {
-        context = JSON.parse($('#code').val());
-        $('#show_context').click();
-    });
-
-});
 
 </script>
 </head>
