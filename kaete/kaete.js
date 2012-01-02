@@ -41,14 +41,13 @@
     // The unescaped variable signifier, eg the "*" in "[[* ... ]]"
     Kaete.TAG_VARIABLE_UNESCAPED = '*';
 
+    var escape_regexp = function(s) {
+        return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+    }
 
     var parser;
 
     var generate_parser = function() {
-        var escape_regexp = function(s) {
-            return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-        }
-
         parser = new RegExp(
             // Start of tag, start of non-capturing group for tag types.
             escape_regexp(Kaete.TAG_START) + '(?:'
@@ -73,6 +72,7 @@
     // TODO: Obfuscate these a little more
     var print_array_name = '__p';
     var context_name = '__context';
+    var comment_index_marker = '__index-marker';
 
     var escape_html_regexp = /[&<>"'\/]/g;
     Kaete.escape_html = function(s) {
@@ -94,15 +94,24 @@
             generate_parser();
         }
 
+        var index_comment = function(index) {
+            if (typeof index === "number") {
+                statements.push("/* ", comment_index_marker, ":", index, " */ ");
+            }
+        }
+
         // Compile a variable and push output onto statements
-        var compile_variable = function(expression, unescaped) {
+        var compile_variable = function(expression, unescaped, index) {
             if (expression) {
                 if (print_mode) {
-                    statements.push(",\n");
+                    statements.push(",");
                 } else {
                     print_mode = true;
                     statements.push(print_array_name, ".push(")
                 }
+                statements.push("\n");
+
+                index_comment(index);
 
                 if (!unescaped) {
                     statements.push('Kaete.escape_html(');
@@ -122,12 +131,14 @@
             }
         }
 
-        var compile_code = function(code) {
+        var compile_code = function(code, index) {
             if (code) {
                 if (print_mode) {
                     statements.push(");\n");
                     print_mode = false;
                 }
+
+                index_comment(index);
 
                 statements.push(code, "\n");
             }
@@ -143,12 +154,14 @@
         // Walk through template looking for template tags
         var match;
         while (match = parser.exec(this.template)) {
-            // Refer to PARSER for match indexes
-            compile_string(this.template.slice(last_match_end, match.index));
-            compile_code(match[1]);
-            compile_variable(match[3], match[2]);
+            var match_index = match.index;
 
-            last_match_end = match.index + match[0].length;
+            // Refer to PARSER for match indexes
+            compile_string(this.template.slice(last_match_end, match_index));
+            compile_code(match[1], match_index);
+            compile_variable(match[3], match[2], match_index);
+
+            last_match_end = match_index + match[0].length;
         }
 
         // Compile left over text
@@ -162,27 +175,76 @@
         statements.push("\n};\n",
             "return ", print_array_name, '.join("");');
 
-        var func_body = statements.join("");
+        this.func_body = statements.join("");
         try {
-            this.func = new Function(context_name, func_body);
-        } catch (exp) {
-            alert("Error compiling template.\n\n" + exp.message);
-            this.func = func_body;  // TODO: don't define function as a string (use null)
+            this.func = new Function(context_name, this.func_body);
+        } catch (exception) {
+            if (exception.lineNumber) {
+                // line below is 4 lines away from the original exception, hence + 4 (first line = 0)
+                var error_line_number = exception.lineNumber - exception.constructor("").lineNumber + 4;
+                this.explain_error(exception.message, error_line_number);
+            }
+            console.log("Error compiling template.\n\n" + exception.message);
         }
     }
 
     Kaete.prototype.render = function(context) {
-        if (typeof this.func == "function") {  // TODO: function should be null if not defined
+        if (this.func) {
             try {
                 // Call with global scope
                 return this.func.call(global, context || {});
             } catch (exp) {
-                alert("Error rendering template.\n\n" + exp.message);
+                console.log("Error rendering template.\n\n" + exp.message);
                 return "Couldn't render template.";
             }
         } else {
-            return "Couldn't compile template.";
+            if (this.error_explained) {
+                return this.error_explained;
+            } else {
+                return "Couldn't compile template.";
+            }
         }
+    }
+
+    Kaete.prototype.explain_error = function(message, line_number) {
+        console.log("Explaining error in this.func_code around line #" + line_number);
+
+        var func_lines = this.func_body.split("\n");
+        var template_error_index = -1;
+        var matcher = new RegExp("^\\/\\* " + escape_regexp(comment_index_marker) + ":(\\d+) ");
+
+        for (var i = line_number; (i >= 0) && (i < func_lines.length); i--) {
+            var line = func_lines[i];
+            var match = line.match(matcher);
+
+            if (match) {
+                var template_error_index = parseInt(match[1]);
+                break;
+            }
+        }
+
+        if (template_error_index > -1) {
+            console.log("Error index in this.template is " + template_error_index);
+        } else {
+            console.log("Couldn't find an error index in this.template ");
+        }
+
+        var template_before = this.template.substr(0, template_error_index);
+        var template_after_lines = this.template.substr(template_error_index).split("\n");
+        var template_after_first_line = template_after_lines[0];
+        var template_after_rest = template_after_lines.slice(1).join("\n");
+
+
+        var last_line_idx = template_before.lastIndexOf('\n');
+        var error_space_offset = "";
+        if (last_line_idx >= 0) {
+            error_space_offset = Array(template_before.substr(last_line_idx).length).join(" ");
+        }
+
+        this.error_explained = "<pre>" + Kaete.escape_html(template_before)
+            + Kaete.escape_html(template_after_first_line) + "\n" + error_space_offset
+            + '<span style="font-weight: bold; color: red;">^ '
+            + message + '</span>\n' + Kaete.escape_html(template_after_rest) + '</pre>';
     }
 
     Kaete._clear_cache = function() {  // TODO: Delete this helper
