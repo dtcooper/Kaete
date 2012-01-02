@@ -130,7 +130,6 @@ label.pick-json {
             $('#compile').click(function() {
                 var code = code_div.val();
 
-                Kaete._clear_cache();
                 var template = global.template = new Kaete(code);
 
                 $('#compiled_function').text(template.func_body);
