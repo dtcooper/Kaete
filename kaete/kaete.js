@@ -4,13 +4,14 @@
     var cache = {};
 
     var Kaete = global.Kaete = function(template) {
-        this.template = template;  // TODO: No need to store this
+        this.template = template;
 
         if (typeof cache[template] === "undefined") {
             this.compile();
-            cache[template] = this.func;
+            cache[template] = {func: this.func, func_body: this.func_body};
         } else {
-            this.func = cache[template];
+            this.func = cache[template].func;
+            this.func_body = cache[template].func_body;
         }
     }
 
@@ -70,9 +71,8 @@
 
     }
 
-    // TODO: Obfuscate these a little more
-    var print_array_name = '__p';
-    var context_name = '__context';
+    var print_array_name = '__Kaete_print';
+    var context_name = '__Kaete_context';
 
     var escape_html_regexp = /[&<>"'\/]/g;
     Kaete.escape_html = function(s) {
@@ -162,31 +162,21 @@
         statements.push("\n};\n",
             "return ", print_array_name, '.join("");');
 
-        var func_body = statements.join("");
+        this.func_body = statements.join("");
         try {
-            this.func = new Function(context_name, func_body);
-        } catch (exp) {
-            alert("Error compiling template.\n\n" + exp.message);
-            this.func = func_body;  // TODO: don't define function as a string (use null)
+            this.func = new Function(context_name, this.func_body);
+        } catch (exception) {
+            this.func = function() { return "Error compiling template: " + exception.message; };
         }
     }
 
     Kaete.prototype.render = function(context) {
-        if (typeof this.func == "function") {  // TODO: function should be null if not defined
-            try {
-                // Call with global scope
-                return this.func.call(global, context || {});
-            } catch (exp) {
-                alert("Error rendering template.\n\n" + exp.message);
-                return "Couldn't render template.";
-            }
-        } else {
-            return "Couldn't compile template.";
+        // Call with global scope
+        try {
+            return this.func.call(global, context || {});
+        } catch (exception) {
+            return "Error rendering template: " + exception.message;
         }
-    }
-
-    Kaete._clear_cache = function() {  // TODO: Delete this helper
-        cache = {};
     }
 
     Kaete.render = function(template, context) {
@@ -198,10 +188,11 @@
         if (options) {
             for (var option in options) {
                 // make sure it's uppercase in a naive attempt to safeguard the namespace
-                if (/^[A-Z_0-9]+$/.test(option) && (typeof Kaete[option] != 'undefined')) {
+                if (/^[A-Z_0-9]+$/.test(option) && (typeof Kaete[option] !== "undefined")) {
                     Kaete[option] = options[option];
                 } else {
-                    alert("Kaete.configure() -- Invalid option: " + option);
+                    alert("Kaete.configure(): Invalid option. [" + option + "="
+                        + JSON.stringify(options[option]) + "]");
                 }
             }
         }
