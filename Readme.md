@@ -195,7 +195,7 @@ For example,
 License
 -------
 
-    Copyright (c) 2011, David Cooper <dave@kupesoft.com>
+    Copyright (c) 2011-2012, David Cooper <dave@kupesoft.com>
     All rights reserved.
 
     Dedicated to Kate Lacey
