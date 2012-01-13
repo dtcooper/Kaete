@@ -166,7 +166,7 @@
         try {
             this.func = new Function(context_name, this.func_body);
         } catch (exception) {
-            this.func = function() { return "Error compiling template: " + exception.message; };
+            this.func = function() { return "<p>Error compiling template: " + Kaete.escape_html(exception.message) + "</p>"; };
         }
     }
 
@@ -175,7 +175,7 @@
         try {
             return this.func.call(global, context || {});
         } catch (exception) {
-            return "Error rendering template: " + exception.message;
+            return "<p>Error rendering template: " + Kaete.escape_html(exception.message) + "</p>";
         }
     }
 
