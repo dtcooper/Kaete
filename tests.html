@@ -97,7 +97,7 @@ $(function() {
         }
 
         var template = "[% . %]";
-        equals("Error compiling template: " + expected_message, Kaete.render(template));
+        equals("<p>Error compiling template: " + Kaete.escape_html(expected_message) + "</p>", Kaete.render(template));
     });
 
     test("Render time error", function() {
@@ -112,7 +112,7 @@ $(function() {
         }
 
         var template = "[[ " + bad_name + " ]]";
-        equals("Error rendering template: " + expected_message, Kaete.render(template));
+        equals("<p>Error rendering template: " + Kaete.escape_html(expected_message) + "</p>", Kaete.render(template));
     });
 
 
