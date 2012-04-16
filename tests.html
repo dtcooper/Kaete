@@ -15,17 +15,17 @@ $(function() {
 
     test("One line", function() {
         var template = "This is a text-only template.";
-        equals(template, Kaete.render(template));
+        equal(template, Kaete.render(template));
     });
 
     test("Multi-line", function() {
         var template = "\n\nI love Kaete\n\nIt is truly amazing.\n";
-        equals(template, Kaete.render(template));
+        equal(template, Kaete.render(template));
     });
 
     test("Containing HTML", function() {
         var template = "<h1>Hi, mom!</h1>\n";
-        equals(template, Kaete.render(template));
+        equal(template, Kaete.render(template));
     });
 
 
@@ -34,32 +34,32 @@ $(function() {
     test("One variable", function() {
         var template = "[[ name ]]";
         var context = {name: "Bernard"};
-        equals("Bernard", Kaete.render(template, context));
+        equal("Bernard", Kaete.render(template, context));
     });
 
     test("One variable with padded text", function() {
         var template = "All aboard the [[ vessel ]].";
         var context = {vessel: "sailboat"};
-        equals("All aboard the sailboat.", Kaete.render(template, context));
+        equal("All aboard the sailboat.", Kaete.render(template, context));
     });
 
     test("A JavaScript expression", function() {
         var template = "Did you know that 1 + 2 = [[ 1 + 2 ]]?";
-        equals("Did you know that 1 + 2 = 3?", Kaete.render(template));
+        equal("Did you know that 1 + 2 = 3?", Kaete.render(template));
     });
 
     test("Numerous variables", function() {
         var template = '"[[ noun ]] [[ verb ]] [[ adjective ]] [[ plural_noun ]][[ full_stop ]]"';
         var context = {noun: "Bob", verb: "likes", adjective: "small", plural_noun: "dogs", full_stop: "."};
-        equals('"Bob likes small dogs."', Kaete.render(template, context));
+        equal('"Bob likes small dogs."', Kaete.render(template, context));
     });
 
     test("Escaped/Unescaped variables", function() {
         var template = '[[ greeting ]]';
         var template_unescaped = '[[* greeting ]]';
         var context = {greeting: '<h1>Hi, mom!</h1>'};
-        equals('&#60;h1&#62;Hi, mom!&#60;&#47;h1&#62;', Kaete.render(template, context));
-        equals('<h1>Hi, mom!</h1>', Kaete.render(template_unescaped, context));
+        equal('&#60;h1&#62;Hi, mom!&#60;&#47;h1&#62;', Kaete.render(template, context));
+        equal('<h1>Hi, mom!</h1>', Kaete.render(template_unescaped, context));
     });
 
 
@@ -67,22 +67,22 @@ $(function() {
 
     test("Set and print a variable", function() {
         var template = 'code="[% var test = "Hello, World!" %]", var="[[ test ]]"';
-        equals('code="", var="Hello, World!"', Kaete.render(template));
+        equal('code="", var="Hello, World!"', Kaete.render(template));
     });
 
     test("Looping", function() {
         var template = "I like to count. [% for (var num = 1; num < 10; num++) { %][[ num ]][% } %]!";
-        equals('I like to count. 123456789!', Kaete.render(template));
+        equal('I like to count. 123456789!', Kaete.render(template));
     });
 
     test("print() function", function() {
         var template = "<p>[% print('<strong>', 'hello', '</strong>'); %]</p>";
-        equals('<p>&#60;strong&#62;hello&#60;&#47;strong&#62;</p>', Kaete.render(template));
+        equal('<p>&#60;strong&#62;hello&#60;&#47;strong&#62;</p>', Kaete.render(template));
     });
 
     test("print_unescaped() function", function() {
         var template = "<p>[% print_unescaped('<strong>', 'hello', '</strong>'); %]</p>";
-        equals('<p><strong>hello</strong></p>', Kaete.render(template));
+        equal('<p><strong>hello</strong></p>', Kaete.render(template));
     });
 
 
@@ -97,7 +97,7 @@ $(function() {
         }
 
         var template = "[% . %]";
-        equals("<p>Error compiling template: " + Kaete.escape_html(expected_message) + "</p>", Kaete.render(template));
+        equal("<p>Error compiling template: " + Kaete.escape_html(expected_message) + "</p>", Kaete.render(template));
     });
 
     test("Render time error", function() {
@@ -112,7 +112,7 @@ $(function() {
         }
 
         var template = "[[ " + bad_name + " ]]";
-        equals("<p>Error rendering template: " + Kaete.escape_html(expected_message) + "</p>", Kaete.render(template));
+        equal("<p>Error rendering template: " + Kaete.escape_html(expected_message) + "</p>", Kaete.render(template));
     });
 
 
@@ -128,7 +128,7 @@ $(function() {
         });
 
         var template = "<# Comment #>Testing: <% for (var i = 1; i <= 3; i++) { %><[ i ]><% } %>.";
-        equals("Testing: 123.", Kaete.render(template));
+        equal("Testing: 123.", Kaete.render(template));
 
         Kaete.configure({
             TAG_START: old_tag_start,
